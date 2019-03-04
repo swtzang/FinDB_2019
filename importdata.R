@@ -1,5 +1,16 @@
-etf4<-read.table("ETF4_2000_2018_d.txt")
 
-etf4<-etf4[, c(-2, -4)]
-etf4<-etf4[-1,]
-colnames(etf4)<-c("id", "date", "price")
+
+etf4<-read.csv("ETF4_2000_2018_d.csv")
+str(etf4)
+
+library(readr)
+
+etf4_csv<-read_csv("ETF4_2000_2018_d.csv", 
+                   locale = locale(encoding='big5'))
+et4_txt<-read.table("ETF4_2000_2018_d.txt")
+
+
+
+
+
+
