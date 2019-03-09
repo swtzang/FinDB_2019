@@ -73,8 +73,14 @@ etf4_day <- coredata(etf4.xts[-1,])/ coredata(etf4.xts[-dim(etf4.xts)[1],]) - 1
 head(etf4_day)
 install.packages("PerformanceAnalytics")
 library(PerformanceAnalytics)
-etf4_day_ret<-Return.calculate(etf4.xts)
+etf4_day_ret<-na.omit(Return.calculate(etf4.xts))
 head(etf4_day_ret)
+write.csv(etf4_day_ret, "etf4_day_ret.csv")
+write.table(etf4_day_ret, "etf4_day_ret.txt", sep="\t")
+save(etf4_day_ret, file = "etf4_day_ret.RData")
+#load("etf4_day_ret.RData")
+#save.image(file = "importdata.RData")
+#load(file = "importdata.RData")
 #----------------------------------------------------------
 etf4_monthly <- to.monthly(etf4.xts, indexAt = "lastof", OHLC =FALSE)
 head(etf4_monthly)
@@ -86,20 +92,23 @@ etf4_mon_ret <-Return.calculate(etf4_monthly, method = "log") %>%
 head(etf4_mon_ret)
 dim(etf4_mon_ret)
 #-------------------------------------------------------------
-plot(etf4_mon_ret)
-plot.xts(etf4_mon_ret, auto.legend = TRUE)
+plot(etf4_mon_ret, xaxt='n')
+#axis(1, index(etf4_mon_ret), format(index(etf4_mon_ret), "%Y/%m"))
+#axis(side=1, at=yahoo2$date[ at ], labels=format(yahoo2$date[at], '%b-%y'))
+#plot.xts(etf4_mon_ret, auto.legend = TRUE)
 #-----------------------------------------------------------
+install.packages("tidyverse")
 library(tidyverse)
 library(ggplot2)
 # convert xts into data frame which can be used by ggplot
 #etf4_returns.df<-fortify(etf4_returns_xts)
-etf4_returns.df<-fortify(etf4_returns_xts, melt=TRUE)
-head(etf4_returns.df)
+etf4_ret.df<-fortify(etf4_mon_ret, melt=TRUE)
+head(etf4_ret.df)
 #
-p<-ggplot(etf4_returns.df, aes(x = Index, y = Value))+
+p<-ggplot(etf4_ret.df, aes(x = Index, y = Value))+
   geom_line(aes(color = Series), size = 1)
 
-p + scale_x_date(date_labels = "%b/%Y")
+p + scale_x_date(date_labels = "%Y/%m")
 
 # histogram distribution
 q<-etf4_returns.df %>%
