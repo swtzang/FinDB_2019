@@ -91,6 +91,13 @@ etf4_mon_ret <-Return.calculate(etf4_monthly, method = "log") %>%
   na.omit()
 head(etf4_mon_ret)
 dim(etf4_mon_ret)
+#---------------------------------------------------
+# 作業：
+# 從TEJ下載ETF
+
+
+#============================================================
+# Plot in R
 #-------------------------------------------------------------
 plot(etf4_mon_ret, xaxt='n')
 #axis(1, index(etf4_mon_ret), format(index(etf4_mon_ret), "%Y/%m"))
