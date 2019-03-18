@@ -42,6 +42,13 @@ library(readxl)
 etf4_xls<-read_excel("ETF4_2000_2018_d.xls", 
                      col_types =c("text", "text","text", "numeric","numeric"))
 head(etf4_xls)
+#----------------------------------------------------------------------------
+# Practice 01:
+# Try to import '2017Q4_code.csv'
+#-----------------------------------------------------------------------------
+tw50_2017<-read_csv("2017Q4_code.csv", locale = locale(encoding='big5'))
+head(tw50_2017)
+
 #=============================================================================
 # clean data
 etf4.c<-etf4_csv[, c(-2, -4)]
