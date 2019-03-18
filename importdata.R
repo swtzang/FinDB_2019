@@ -51,6 +51,7 @@ head(tw50_2017)
 #
 install.packages("quantmod")
 library(quantmod)
+
 tickers<-c("2330.TW", "1101.TW", "1102.TW")
 getSymbols(tickers, from= '2016-01-01', auto.assign = T)
 #
@@ -61,6 +62,24 @@ data=new.env()
 getSymbols(code50.tw, from= '2016-01-01', env = data, auto.assign = T)
 names(data)
 data$`1101.TW`
+# Error: 2311.TW download failed after two attempts. Error message:
+# Replace 2311 with 3711
+getSymbols("3711.TW", from= '2016-01-01', auto.assign = T)
+data$"3711.TW"<-`3711.TW`
+# Combine adjusted closing price across all 50 stocks!
+str(data)
+ls(data)
+tw50p<-data.frame()
+
+t<-as.data.frame(as.list(data))
+dim(t)
+head(t)
+head(t[1])
+
+for (i in c("1101.TW", "1102.TW")) {
+    tmp<-paste(data)
+    tw50p<-cbind(tw50p, Ad(data$"1101.TW"))
+}
 
 #=============================================================================
 # clean data
