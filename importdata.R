@@ -129,9 +129,6 @@ last(lastweek, 2)
 # Extract all but the first two days of lastweek
 first(lastweek, "-2 days")
 
-
-
-
 #------------------------------------------------------------
 # Converting Daily Prices to Monthly Returns in the xts world
 #------------------------------------------------------------
@@ -159,19 +156,56 @@ dim(etf4_returns_xts)
 # you can also use coredata() to compute returns directly
 etf4_ret<-coredata(etf4_monthly[-1,])/coredata(etf4_monthly[-dim(etf4_monthly)[1],])-1
 head(etf4_ret)
+class(etf4_ret)
 #============================================================
 # Plot in R
 #-------------------------------------------------------------
 plot(etf4_returns_xts, xaxt='n')
 axis(1, index(etf4_returns_xts), format(index(etf4_returns_xts), "%Y/%m"))
-#axis(side=1, at=yahoo2$date[ at ], labels=format(yahoo2$date[at], '%b-%y'))
-#plot.xts(etf4_mon_ret, auto.legend = TRUE)
+# plot the scatterplot of 0050 and 00646
+# convert xts into df using fortify()
+etf4_ret.df1<-fortify(etf4_returns_xts)
+head(etf4_ret.df1)
+plot(etf4_ret.df1$`0050`, etf4_ret.df1$`00646`, pch=20,
+     col = 'darkred', main = '0050 vs. 00646 monthly returns',
+     xlab = '0050', ylab = '00646 S&P500')
 #-----------------------------------------------------------
 #install.packages("tidyverse")
 library(tidyverse)
 library(ggplot2)
 # convert xts into data frame which can be used by ggplot
-#etf4_returns.df<-fortify(etf4_returns_xts)
+# split date index in xts into year, month and day columns 
+# using lubridate package
+library(lubridate)
+etf4_ret.df2 <- cbind(etf4_ret.df1, month=month(index(etf4_returns_xts)), 
+                      year=year(index(etf4_returns_xts)))
+#
+ggplot(data = etf4_ret.df2) +
+  geom_point(mapping = aes(x = etf4_ret.df2$`0050`, y = etf4_ret.df2$`0056`, color = month))
+#
+ggplot(data = etf4_ret.df2) +
+  geom_point(mapping = aes(x = etf4_ret.df2$`0050`, y = etf4_ret.df2$`0056`, size = month))
+#
+ggplot(data = etf4_ret.df2) +
+  geom_point(mapping = aes(x = etf4_ret.df2$`0050`, y = etf4_ret.df2$`0056`, alpha = month))
+#
+etf4_ret
+etf4_ret.tmp<-data.frame(date = index(etf4_returns_xts), etf4_ret)
+head(etf4_ret.tmp)
+# or you can use the following code
+etf4_ret.tmp<-etf4_returns_xts %>% 
+  data.frame(date=index(.)) %>% 
+  remove_rownames() %>% 
+  gather(asset, return, -date) # turn data into long format
+
+head(etf4_ret.tmp)
+#
+plot(etf4_ret.tmp$X0050, etf4_ret.tmp$X0056)
+#
+ggplot(etf4_ret.tmp) +
+  geom_point(mapping = aes(x = etf4_ret.tmp$`0050`, y = etf4_ret.tmp$`0056`))
+#
+
 etf4_ret.df<-fortify(etf4_returns_xts, melt=TRUE)
 head(etf4_ret.df)
 #
@@ -209,39 +243,10 @@ etf4_ret.df %>%
   ylab("distribution") +
   theme_update(plot.title = element_text(hjust = 0.5))
 
-# plot the scatterplot of 0050 and 00646
-# convert xts into df 
-etf4_ret.df1<-fortify(etf4_returns_xts)
-plot(etf4_returns.df1$`0050`, etf4_returns.df1$`00646`, pch=20,
-     col = 'darkred', main = '0050 vs. 00646 monthly returns',
-     xlab = '0050', ylab = '00646 S&P500')
+#---------------------------------------------------------------
 
 
-#================================================
-# some manipulations on xts 
-#================================================
-dates <- as.Date("2016-01-01") + 0:40
-# Create ts_a
-ts_a <- xts(x = 1:41, order.by = dates)
-ts_a
-# Create ts_b
-ts_b <- xts(x = 1:41, order.by = as.POSIXct(dates))
-ts_b
-ts_a[index(ts_a)]
-ts_a[index(ts_b)]
-#
-tmp_file <- "http://s3.amazonaws.com/assets.datacamp.com/production/course_1127/datasets/tmp_file.csv"
-# Create dat by reading tmp_file
-dat <- read.csv(tmp_file)
-head(dat)
-str(dat)
-# Convert dat into xts
-xts(dat, order.by = as.Date(rownames(dat), "%m/%d/%Y"))
 
-# Read tmp_file using read.zoo
-dat_zoo <- read.zoo(tmp_file, index.column = 0, sep = ",", format = "%m/%d/%Y")
-dat_zoo
-str(dat_zoo)
-# Convert dat_zoo to xts
-dat_xts <- as.xts(dat_zoo)
-#----------------------------------------------
+
+
+
