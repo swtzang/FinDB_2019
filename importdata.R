@@ -29,7 +29,7 @@ etf4.csv<-read.csv("ETF4_2000_2018_d.csv", fileEncoding='big5',
 head(etf4.csv)
 str(etf4.csv)
 # using read_csv to imoprt data to tibble format
-#install.packages("readr")
+install.packages("readr")
 library(readr)
 etf4_csv<-read_csv("ETF4_2000_2018_d.csv")
 # you will get garbled text!
@@ -37,7 +37,7 @@ etf4_csv<-read_csv("ETF4_2000_2018_d.csv", locale = locale(encoding='big5'))
 head(etf4_csv)
 str(etf4_csv)
 # read xls file
-#install.packages("readxl")
+install.packages("readxl")
 library(readxl)
 etf4_xls<-read_excel("ETF4_2000_2018_d.xls", 
                      col_types =c("text", "text","text", "numeric","numeric"))
@@ -48,6 +48,19 @@ head(etf4_xls)
 #-----------------------------------------------------------------------------
 tw50_2017<-read_csv("2017Q4_code.csv", locale = locale(encoding='big5'))
 head(tw50_2017)
+#
+install.packages("quantmod")
+library(quantmod)
+tickers<-c("2330.TW", "1101.TW", "1102.TW")
+getSymbols(tickers, from= '2016-01-01', auto.assign = T)
+#
+code50<-tw50_2017$code
+code50.tw <- paste(code50, ".TW", sep="")
+#
+data=new.env()
+getSymbols(code50.tw, from= '2016-01-01', env = data, auto.assign = T)
+names(data)
+data$`1101.TW`
 
 #=============================================================================
 # clean data
