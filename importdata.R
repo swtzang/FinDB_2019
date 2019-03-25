@@ -29,7 +29,8 @@ etf4.csv<-read.csv("ETF4_2000_2018_d.csv", fileEncoding='big5',
 head(etf4.csv)
 str(etf4.csv)
 # using read_csv to imoprt data to tibble format
-#install.packages("readr")
+# install.packages("readr")
+# library(readr)
 ifelse(!require(readr), install.packages('readr'), library(readr))
 #
 etf4_csv<-read_csv("ETF4_2000_2018_d.csv")
@@ -93,26 +94,26 @@ for (i in c("1101.TW", "1102.TW")) {
 # http://www.learn-r-the-easy-way.tw/chapters/5
 #---------------------------------------------------
 # use loop to solve error problem
-i=1
-for(i in 1:length(code50.tw)) {
-  symbol <- code50.tw[i]
-  tryit <- try(getSymbols(symbol,from="2016-01-01", src='yahoo'))
-  # specify the "from" date to desired start date
-  if(inherits(tryit, "try-error")){
-    i <- i+1
-  } else {
-    data <- getSymbols(symbol, from="2016-04-27", src='yahoo')# specify the "from" date to desired start date
-    dataset <- merge(dataset, Cl(get(name[i])))#將所有股票的收盤價 Cl 合併成一個 data frame
-    rm(symbol)
-  }
-}
-
+# i=1
+# for(i in 1:length(code50.tw)) {
+#   symbol <- code50.tw[i]
+#   tryit <- try(getSymbols(symbol,from="2016-01-01", src='yahoo'))
+#   # specify the "from" date to desired start date
+#   if(inherits(tryit, "try-error")){
+#     i <- i+1
+#   } else {
+#     data <- getSymbols(symbol, from="2016-04-27", src='yahoo')# specify the "from" date to desired start date
+#     dataset <- merge(dataset, Cl(get(name[i])))#將所有股票的收盤價 Cl 合併成一個 data frame
+#     rm(symbol)
+#   }
+# }
+#------------------------------------------------------------------------------
 # 將沒有找到的股票error找出，並將結果輸出為NULL
 show_condition <- function(code){
   tryCatch(code, 
            error = function(c){print("error"); return(NULL)},
-           warning = function(c){print(paste("Caught warning message:", symbol))},
-           message = function(c){symbol}
+           warning = function(c){print(paste("Caught warning message:", symboli))},
+           message = function(c){symboli}
            )
 }
 # 將沒有找到的股票error找出，並將結果輸出為NULL
@@ -138,7 +139,13 @@ for (symboli in code50.tw) {
     }
 }
 
-
+all.data
+dim(all.data)
+head(all.data)
+tw50<-Cl(all.data)
+head(tw50)
+tw50<-na.omit(tw50)
+tw50
 #=============================================================================
 # clean data
 etf4.c<-etf4_csv[, c(-2, -4)]
@@ -261,6 +268,8 @@ plot(etf4_returns_xts, xaxt='n')
 axis(1, index(etf4_returns_xts), format(index(etf4_returns_xts), "%Y/%m"))
 # plot the scatterplot of 0050 and 00646
 # convert xts into df using fortify()
+library(ggplot2)
+#
 etf4_ret.df1<-fortify(etf4_returns_xts)
 head(etf4_ret.df1)
 plot(etf4_ret.df1$`0050`, etf4_ret.df1$`00646`, pch=20,
@@ -290,24 +299,28 @@ etf4_ret
 etf4_ret.tmp<-data.frame(date = index(etf4_returns_xts), etf4_ret)
 head(etf4_ret.tmp)
 # or you can use the following code
-etf4_ret.tmp<-etf4_returns_xts %>% 
+# %>% pipe operator
+#etf4_ret.tmp<-data.frame(etf4_returns_xts, date=index(etf4_returns_xts)) 
+
+etf4_ret.tmp02<-etf4_returns_xts %>% 
   data.frame(date=index(.)) %>% 
   remove_rownames() %>% 
   gather(asset, return, -date) # turn data into long format
 
-head(etf4_ret.tmp)
+head(etf4_ret.tmp02)
 #
-plot(etf4_ret.tmp$X0050, etf4_ret.tmp$X0056)
+#plot(etf4_ret.tmp02$X0050, etf4_ret.tmp02$X0056)
 #
-ggplot(etf4_ret.tmp) +
-  geom_point(mapping = aes(x = etf4_ret.tmp$`0050`, y = etf4_ret.tmp$`0056`))
+#ggplot(etf4_ret.tmp02) +
+#  geom_point(mapping = aes(x = X0050, y = X0056))
 #
-
+#---------------------------------------------------
 etf4_ret.df<-fortify(etf4_returns_xts, melt=TRUE)
 head(etf4_ret.df)
 #
 p<-ggplot(etf4_ret.df, aes(x = Index, y = Value))+
   geom_line(aes(color = Series), size = 1)
+p
 
 p + scale_x_date(date_labels = "%Y/%m")
 
@@ -341,9 +354,11 @@ etf4_ret.df %>%
   theme_update(plot.title = element_text(hjust = 0.5))
 
 #---------------------------------------------------------------
-
-
-
+library(plotly)
+p1<-plot_ly(etf4_ret.tmp, x = ~date, y=~X0050, name = "0050", type = 'scatter', mode = 'lines') %>% 
+    add_trace(y=~X0056, name = '0056', mode = 'lines+markers') %>% 
+    layout(xaxis = list(title ='year'), yaxis = list(title='monthly returns'))
+p1
 
 
 
