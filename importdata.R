@@ -29,16 +29,17 @@ etf4.csv<-read.csv("ETF4_2000_2018_d.csv", fileEncoding='big5',
 head(etf4.csv)
 str(etf4.csv)
 # using read_csv to imoprt data to tibble format
-install.packages("readr")
-library(readr)
+#install.packages("readr")
+ifelse(!require(readr), install.packages('readr'), library(readr))
+#
 etf4_csv<-read_csv("ETF4_2000_2018_d.csv")
 # you will get garbled text!
 etf4_csv<-read_csv("ETF4_2000_2018_d.csv", locale = locale(encoding='big5'))
 head(etf4_csv)
 str(etf4_csv)
 # read xls file
-install.packages("readxl")
-library(readxl)
+ifelse(!require(readxl), install.packages('readxl'), library(readxl))
+#
 etf4_xls<-read_excel("ETF4_2000_2018_d.xls", 
                      col_types =c("text", "text","text", "numeric","numeric"))
 head(etf4_xls)
@@ -49,14 +50,14 @@ head(etf4_xls)
 tw50_2017<-read_csv("2017Q4_code.csv", locale = locale(encoding='big5'))
 head(tw50_2017)
 #
-install.packages("quantmod")
-library(quantmod)
-
-tickers<-c("2330.TW", "1101.TW", "1102.TW")
-getSymbols(tickers, from= '2016-01-01', auto.assign = T)
+ifelse(!require(quantmod), install.packages('quantmod'), library(quantmod))
 #
 code50<-tw50_2017$code
 code50.tw <- paste(code50, ".TW", sep="")
+code50.tw
+#
+#tickers<-c("2330.TW", "1101.TW", "1102.TW")
+#getSymbols(tickers, from= '2016-01-01', auto.assign = T)
 #
 data=new.env()
 getSymbols(code50.tw, from= '2016-01-01', env = data, auto.assign = T)
@@ -80,6 +81,63 @@ for (i in c("1101.TW", "1102.TW")) {
     tmp<-paste(data)
     tw50p<-cbind(tw50p, Ad(data$"1101.TW"))
 }
+#--------------------------------------------------
+# 錯誤處理：
+# Reference: 
+# tryCatch()
+# https://www.cnblogs.com/weibaar/p/4382397.html
+# http://xuyt.blogspot.com/2013/10/rtry-and-catch.html
+# try()
+# http://www.endmemo.com/program/R/try.php
+# inherits()
+# http://www.learn-r-the-easy-way.tw/chapters/5
+#---------------------------------------------------
+# use loop to solve error problem
+i=1
+for(i in 1:length(code50.tw)) {
+  symbol <- code50.tw[i]
+  tryit <- try(getSymbols(symbol,from="2016-01-01", src='yahoo'))
+  # specify the "from" date to desired start date
+  if(inherits(tryit, "try-error")){
+    i <- i+1
+  } else {
+    data <- getSymbols(symbol, from="2016-04-27", src='yahoo')# specify the "from" date to desired start date
+    dataset <- merge(dataset, Cl(get(name[i])))#將所有股票的收盤價 Cl 合併成一個 data frame
+    rm(symbol)
+  }
+}
+
+# 將沒有找到的股票error找出，並將結果輸出為NULL
+show_condition <- function(code){
+  tryCatch(code, 
+           error = function(c){print("error"); return(NULL)},
+           warning = function(c){print(paste("Caught warning message:", symbol))},
+           message = function(c){symbol}
+           )
+}
+# 將沒有找到的股票error找出，並將結果輸出為NULL
+all.data<-c()
+TSE_tw50_symbols_yahoo<-c()
+#
+symboli = "1101.TW"
+for (symboli in code50.tw) {
+  yx = show_condition(getSymbols(symboli, from = '2016-01-01', index.class = 'Date'))
+  Sys.sleep(0.2 + runif(1)/2) # 不要一直抓，讓系統短暫休息
+  if(is.null(yx)){
+    for (hx in seq(1)){
+      yx = show_condition(getSymbols(symboli, from = '2016-01-01', index.class = 'Date'))
+      Sys.sleep(0.2 + runif(1)/2) # 不要一直抓，讓系統短暫休息
+      print(paste("重試", hx, "次"))
+    }
+   }
+  if(!is.null(yx)){ #無錯誤就繼續抓
+    print(c(i, symboli))
+    getSymbols(symboli, from = '2016-01-01', index.class = 'Date')
+    all.data<-cbind(all.data, get(symboli))
+    TSE_tw50_symbols_yahoo<-cbind(TSE_tw50_symbols_yahoo, yx)
+    }
+}
+
 
 #=============================================================================
 # clean data
