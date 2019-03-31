@@ -178,6 +178,7 @@ etf4.xts<-xts(etf4.reorder[,-1], order.by = etf4.reorder$date)
 head(etf4.xts)
 tail(etf4.xts)
 str(etf4.xts)
+saveRDS(etf4.xts, "etf4_xts_all")
 #----------------------------------------------
 # Handling missingness in your data 
 #----------------------------------------------
@@ -206,10 +207,10 @@ head(lag_x)
 #-----------------------------------------------------------
 # export data
 #----------------------------------------------------------
-write.csv(etf4.xts, file = "myetf4.csv")
+write.csv(etf4.xts1, file = "myetf4.csv")
 # date index disappears!!!
 # you have to use write.zoo to save .xts file
-write.zoo(etf4.xts, sep = ',', file = "myetf4.csv.1")
+# write.zoo(etf4.xts, sep = ',', file = "myetf4.csv.1")
 saveRDS(etf4.xts, file = "etf4.xts.rds")
 etf4.xts2 <- readRDS("etf4.xts.rds")
 head(etf4.xts2)
@@ -226,12 +227,6 @@ head(etf4.xts3)
 etf4_2016<-etf4.xts['2016']
 etf4_2016_01_06 <- etf4.xts["20160101/20160630"]
 head(etf4_2016_01_06)
-#
-lastweek <- last(etf4_2016, "1 week")
-# Print the last 2 observations in lastweek
-last(lastweek, 2)
-# Extract all but the first two days of lastweek
-first(lastweek, "-2 days")
 
 #------------------------------------------------------------
 # Converting Daily Prices to Monthly Returns in the xts world
