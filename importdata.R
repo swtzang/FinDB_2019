@@ -139,6 +139,7 @@ for (symboli in code50.tw) {
     }
 }
 
+
 all.data
 dim(all.data)
 head(all.data)

@@ -1,11 +1,12 @@
 # Reference: http://www.systematicportfolio.com
 # Evaluate and analyze Trading Strategies
+rm(list=ls())
+#
 con = gzcon(url('http://www.systematicportfolio.com/sit.gz', 'rb'))
 source(con)
 close(con)
 
 load.packages('quantmod')
-
 # data is a time series of price
 # signal is a indicator vector for buy and sell
 bt.simple <- function(data, signal)
@@ -29,7 +30,6 @@ bt.simple <- function(data, signal)
 # Test for bt.simple functions
 # load historical prices from Yahoo Finance
 data <- getSymbols('SPY', src = 'yahoo', from = '1980-01-01', auto.assign = F)
-
 # buy and hold
 signal <- rep(1, nrow(data))
 buy.hold <- bt.simple(data, signal)
@@ -83,22 +83,23 @@ data <- new.env() # data is a environment
 
 # bt.prep function merges and aligns all symbols in the data environment
 getSymbols(tickers, src = 'yahoo', from = '1970-01-01', env = data, auto.assign = T)
-bt.prep(data, align='keep.all')
+# bt.prep(data, align='keep.all')
 names(data)
-data$weight
-data$execution.price
+prices<-Ad(data$SPY)
+data$prices<-prices
+data$weight<-prices * NA
+data$execution.price <- prices * NA
 head(data$prices)
 tail(data$prices)
 #*****************************************************************
 # Code Strategies
-#******************************************************************
-prices <- data$prices  # price for SPY
-
+#*****************************************************************
 # bt.run computes the equity curve of strategy specified by data$weight matrix. 
 # The data$weight matrix holds weights (signals) to open/close positions
-# Buy & Hold   
+# Buy & Hold 
 data$weight[] <- 1
 buy.hold <- bt.run.share(data, clean.signal=F, trade.summary = TRUE)
+buy.hold <- bt.run(data)
 # MA Cross
 #  bt.apply function applies user given function to each symbol in the data environment
 sma <- bt.apply(data, function(x) { SMA(Cl(x), 200) } ) 
@@ -116,4 +117,108 @@ etf4.all<-readRDS("etf4_xts_all")
 
 
 
+#
+tickers = spl('^GSPC')
+
+data <- new.env()
+getSymbols(tickers, src = 'yahoo', from = '1896-01-01', env = data, auto.assign = T)
+bt.prep(data, align='keep.all', dates='1896::2011')
+
+#*****************************************************************
+# Code Strategies
+#****************************************************************** 
+prices = data$prices    
+
+# Buy & Hold	
+data$weight[] = 1
+buy.hold = bt.run(data)
+
+b<- data
+bt.run <- function
+(
+  b,					# environment with symbols time series
+  trade.summary = F, 	# flag to create trade summary
+  do.lag = 1, 		# lag signal
+  do.CarryLastObservationForwardIfNA = TRUE, 
+  type = c('weight', 'share'),
+  silent = F,
+  capital = 100000,
+  commission = 0,
+  weight = b$weight,
+  dates = 1:nrow(b$prices)	
+) 
+{
+  # convert dates to dates.index
+  dates.index = dates2index(b$prices, dates) 
+  
+  # setup
+  type = type[1]
+  
+  # create signal
+  weight[] = ifna(weight, NA)
+  
+  # lag
+  if(do.lag > 0)
+    weight = mlag(weight, do.lag) # Note k=1 implies a move *forward*  
+  
+  # backfill
+  if(do.CarryLastObservationForwardIfNA)
+    weight[] = apply(coredata(weight), 2, ifna.prev)
+  
+  weight[is.na(weight)] = 0
+  
+  # find trades
+  weight1 = mlag(weight, -1)
+  tstart = weight != weight1 & weight1 != 0
+  tend = weight != 0 & weight != weight1
+  trade = ifna(tstart | tend, FALSE)
+  
+  # prices
+  prices = b$prices
+  
+  # execution.price logic
+  if( sum(trade) > 0 ) {
+    execution.price = coredata(b$execution.price)
+    prices1 = coredata(b$prices)
+    
+    prices1[trade] = iif( is.na(execution.price[trade]), prices1[trade], execution.price[trade] )
+    prices[] = prices1
+  }
+  
+  # type of backtest
+  if( type == 'weight') {
+    ret = prices / mlag(prices) - 1
+    ret[] = ifna(ret, NA)
+    ret[is.na(ret)] = 0			
+  } else { # shares, hence provide prices
+    ret = prices
+  }
+  
+  #weight = make.xts(weight, b$dates)
+  temp = b$weight
+  temp[] = weight
+  weight = temp
+  
+  
+  # prepare output
+  bt = bt.summary(weight, ret, type, b$prices, capital, commission)
+  bt$dates.index = dates.index
+  bt = bt.run.trim.helper(bt, dates.index)
+  
+  if( trade.summary ) bt$trade.summary = bt.trade.summary(b, bt)
+  
+  if( !silent ) {
+    # print last signal / weight observation
+    cat('Latest weights :\n')
+    print(round(100*last(bt$weight),2))
+    cat('\n')
+    
+    cat('Performance summary :\n')
+    cat('', spl('CAGR,Best,Worst'), '\n', sep = '\t')  
+    cat('', sapply(cbind(bt$cagr, bt$best, bt$worst), function(x) round(100*x,1)), '\n', sep = '\t')  
+    cat('\n')    
+  }
+  
+  return(bt)
+}
 
