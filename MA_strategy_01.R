@@ -1,7 +1,7 @@
 # Reference: http://www.systematicportfolio.com
 # Evaluate and analyze Trading Strategies
 rm(list=ls())
-#
+# 
 con = gzcon(url('http://www.systematicportfolio.com/sit.gz', 'rb'))
 source(con)
 close(con)
@@ -9,6 +9,8 @@ close(con)
 load.packages('quantmod')
 # data is a time series of price
 # signal is a indicator vector for buy and sell
+
+
 bt.simple <- function(data, signal)
 {
   # lag serial
@@ -32,6 +34,10 @@ bt.simple <- function(data, signal)
 data <- getSymbols('SPY', src = 'yahoo', from = '2000-01-01', to = '2018-12-31', auto.assign = F)
 # buy and hold
 signal <- rep(1, nrow(data))
+head(signal)
+length(signal)
+#
+head(lag(signal,1))
 buy.hold <- bt.simple(data, signal)
 buy.hold$equity<-as.xts(buy.hold$equity)
 head(buy.hold$equity)
@@ -123,8 +129,15 @@ strategy.performance.snapshoot(sma.1.cross, T)
 strategy.performance.snapshoot(buy.hold, T) 
 strategy.performance.snapshoot(models, T) 
 #
-#etf4.all<-readRDS("etf4_xts_all")
+etf4.all<-readRDS("etf4_xts_all")
+head(etf4.all)
+etf4.all.1<-etf4.all[complete.cases(etf4.all),]
+head(etf4.all.1)
+tail(etf4.all.1)
 #
+# Homework:
+# Try to compare the performance of four Taiwan ETFs using etf4.all.1
+
 
 #----------------------------------------------------------
 # Introduction to plota.layout function
