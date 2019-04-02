@@ -148,10 +148,10 @@ load.packages('quantmod')
 # download sample data from Yahoo
 data.spy = getSymbols('SPY', from = '2000-01-01', auto.assign = FALSE)
 data.ibm = getSymbols('IBM', from = '2000-01-01', auto.assign = FALSE)
-
+#
 y = data.spy['2011:01:01::2011:02:01']
 highlight = which(Cl(y) < 127)
-
+#
 png(filename = 'plot1.png', width = 500, height = 500, units = 'px', pointsize = 12, bg = 'white')
 
 layout(c(1,1,2))
