@@ -131,7 +131,10 @@ etf4.all.1<-etf4.all[complete.cases(etf4.all),]
 head(etf4.all.1)
 tail(etf4.all.1)
 # 0050
+library(xts)
 data1<-new.env()
+# To use bt() function, you have to set up three inputs:
+# prices, weight and execution prices
 data1$prices<-etf4.all.1$`0050`
 prices<-data1$prices
 
@@ -140,8 +143,11 @@ head(sma50, 51)
 # buy and hold for 0050
 bt.prep(data1, align='keep.all')
 names(data1)
+data1$dates
+class(data1$dates)
 data1$weight
-data1$execution.price = data1$prices = etf4.all.1$`0050`
+data1$execution.price  = prices
+#data1$execution.price = data1$prices = etf4.all.1$`0050`
 data1$weight[] = 1
 buy.hold.0050 <- bt.run.share(data1, clean.signal=F, trade.summary = TRUE)
 buy.hold.0050 <-bt.run(data1)
