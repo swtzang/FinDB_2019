@@ -1,5 +1,7 @@
+#****************************************************
 # Reference: http://www.systematicportfolio.com
 # Evaluate and analyze Trading Strategies
+#*****************************************************
 rm(list=ls())
 #
 con = gzcon(url('http://www.systematicportfolio.com/sit.gz', 'rb'))
@@ -70,7 +72,7 @@ p<-ggplot(strategy.sma.df, aes(x = Index, y = Value))+
   scale_x_date(date_labels = "%Y/%m") +
   geom_hline(yintercept = c(1.0, 0.6))
 p
-#-----------------------------------------
+
 #===================================================================
 # sample code to implement the above strategies using the backtesting 
 # library in the Systematic Investor Toolbox:
@@ -121,6 +123,7 @@ plotbt.strategy.sidebyside(models, return.table=T)
 #====================================================================================
 # Example: using etf4 to compare their performance using 50-day and 200-day moving average investment strategy 
 # https://systematicinvestor.wordpress.com/2014/08/01/adjusted-momentum/
+#*************************************************************************************
 etf4.all<-readRDS("~/git/FinDB_2019/etf4_xts_all")
 head(etf4.all)
 str(etf4.all)
