@@ -22,7 +22,8 @@ data <- new.env()
 getSymbols(tickers, src = 'yahoo', from = '1980-01-01', env = data, auto.assign = T)
 for(i in ls(data)) data[[i]] = adjustOHLC(data[[i]], use.Adjusted=T)                            
 bt.prep(data, align='remove.na', dates='1990::') 
-
+head(data$prices)
+head(data$execution.price)
 #*****************************************************************
 # Code Strategies
 #******************************************************************                     
