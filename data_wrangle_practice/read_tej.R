@@ -7,7 +7,7 @@ rm(list=ls())
 stock_day_2_year<-read_tsv("data_wrangle_practice/tej_day_price_2017_2018.txt")
 #
 glimpse(stock_day_2_year)
-# data wrangling
+# data wrangling this is a test
 price_day_2_year <- stock_day_2_year %>% 
                     rename(id    = 證券代碼, 
                            name  = 簡稱, 
@@ -40,7 +40,7 @@ price_day_2_year_clear <-  price_day_2_year %>%
                            na.locf(fromLast = TRUE, na.rm=FALSE) %>%
                            select(-c("2025", "6131"))
 dim(price_day_2_year_clear)
-# convert to daily price                         
+# convert to daily return                         
 ret_day_2_year <- price_day_2_year_clear %>% 
                   tk_xts(select = -date, date_var = date) %>% 
                   Return.calculate(method = "log")
@@ -50,13 +50,17 @@ price_day_2_year.xts <- price_day_2_year_clear %>%
                         tk_xts(select = -date, date_var = date)  
 
 ret_mon_2_year.xts <- price_day_2_year.xts %>% 
-                        to.period(period = "months", 
-                                  indexAt = "lastof", 
-                                  OHLC= FALSE) %>% 
-                        Return.calculate(method = "log")
+                      to.period(period  = "months", 
+                                indexAt = "lastof", 
+                                OHLC    = FALSE) %>% 
+                      Return.calculate(method = "log")
 # 
-                  
-
+ret_day_2stock <- ret_day_2_year[-1, c("1101", "2330")] %>% 
+                  tk_tbl(., rename_index = 'date') %>% 
+                  gather(key = id, value = return, time = -date)
+#
+ret_day_2stock %>% ggplot(aes(x= return, fill= id)) +
+                   geom_density(color= "blue") 
 
 
 
