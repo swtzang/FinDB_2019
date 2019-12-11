@@ -1,0 +1,198 @@
+---
+title: ": 金融資料分析期末考"
+author: "Shyh-Weir Tzang"
+date:   "2019/06/17"
+output: 
+    html_document:
+        toc: TRUE
+        theme: flatly
+        highlight: tango
+        code_folding: show
+        df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, warning = FALSE, message=FALSE}
+rm(list=ls())
+library(tidyquant)
+library(timetk)
+```
+
+# 注意：遲交者以零分計。另附上執行結果供同學參考並檢查，也請輸出相同結果，做為評分依據。
+
+# Questions:
+## 1. 使用套件`tidyquant`, `timetk`，並讀入資料 `https://github.com/swtzang/FinDB_2019/tree/master/data_wrangle_practice/tej_day_price_2017_2018.txt` 
+```{r, warning = FALSE, echo=FALSE}
+stock_day_2_year<-read_tsv("tej_day_price_2017_2018.txt")
+#
+glimpse(stock_day_2_year)
+```
+
+## 2. 選取欄位"證券代碼", "簡稱", "年月日", "收盤價(元)", "市值(百萬元)", 並將名稱改為"id", "name", "date", "price", "cap"。
+
+```{r, warning = FALSE, echo=FALSE}
+price_day_2_year <- stock_day_2_year %>% rename(id    = 證券代碼, 
+                            name  = 簡稱, 
+                            date  = 年月日, 
+                            price = `收盤價(元)`,
+                            cap   = `市值(百萬元)`
+                           ) %>% 
+                     select(id, name, date, price, cap)
+glimpse(price_day_2_year)
+```
+
+## 3. 選取id, date, price, 並將id改為文字格式，date改為日期格式，並將資料格式改為寬資料。提示：使用`spread()`。
+```{r, warning=FALSE, echo=FALSE}
+price_day_2_year <- stock_day_2_year %>% 
+                     rename(id    = 證券代碼, 
+                            name  = 簡稱, 
+                            date  = 年月日, 
+                            price = `收盤價(元)`,
+                            cap   = `市值(百萬元)`
+                           ) %>% 
+                    select(id, name, date, price, cap) %>% 
+                    mutate(id = as.character(id)) %>%
+                    mutate(date = as.Date(as.character(date), '%Y%m%d')) %>%
+                    select(id, date, price) %>% 
+                    spread(key = id, value = price)
+glimpse(price_day_2_year)
+```
+
+## 4. 檢查含有`NA`的股票代碼及其`NA`的個數。
+
+```{r, echo=FALSE, warning=FALSE}
+price_day_2_year_na <- price_day_2_year %>% 
+                       map_df(~sum(is.na(.))) %>% 
+                       gather() %>% 
+                       filter(value!=0)
+price_day_2_year_na
+```
+
+## 5. 將`NA`值以最近的股價取代。提示：使用`na.locf()`
+```{r, echo=FALSE, warning=FALSE}
+price_day_2_year_clear <-  price_day_2_year %>% 
+                           na.locf(fromLast = TRUE, na.rm=FALSE)
+price_day_2_year_clear
+```
+
+## 6. 刪除上題中仍含有NA值的股票, 並確認股票數量及筆數。
+```{r, echo=FALSE, warning=FALSE}
+price_day_2_year_clear <-  price_day_2_year_clear %>% 
+                           select(-c("2025", "6131"))
+dim(price_day_2_year_clear)
+```
+
+## 7. 將資料轉為xts(提示：可用`tk_xts()`), 計算日報酬率(以log計算)(提示：可用`Return.calculate()`), 並刪除第一筆沒有報酬率的資料。請顯示前五檔股票第1-5天的報酬率。
+```{r, echo=FALSE, warning=FALSE}
+ret_day_2_year <- price_day_2_year_clear %>% 
+                  tk_xts(select = -date, date_var = date) %>% 
+                  Return.calculate(method = "log")
+ret_day_2_year <- ret_day_2_year[-1,]
+ret_day_2_year[1:5, 1:5]
+```
+
+## 8. 計算月報酬率(以log計算)(提示：可用`Return.calculate()`), 並刪除第一筆沒有報酬率的資料。請顯示前五檔股票第1-5天的報酬率。
+```{r, echo=FALSE, warning=FALSE}
+price_day_2_year.xts <- price_day_2_year_clear %>%
+                        tk_xts(select = -date, date_var = date)  
+ret_mon_2_year.xts <- price_day_2_year.xts %>% 
+                      to.period(period  = "months", 
+                                indexAt = "lastof", 
+                                OHLC    = FALSE) %>% 
+                      Return.calculate(method = "log")
+ret_mon_2_year.xts <- ret_mon_2_year.xts[-1,]
+ret_mon_2_year.xts[1:5, 1:5]
+```
+
+## 9. 找出2017及2018年年底市值最大的前20家公司代碼, 簡稱, 並修改資本額格式，計算每家公司市值佔20家總市值的百分比。提示：使用`filter()`, `arrange()`, `slice()`, `sum()`。
+
+```{r, echo=FALSE, warning=FALSE}
+year.end <- price_day_2_year$date  
+cap_day_2017_2018_year <- stock_day_2_year %>% rename(id = 證券代碼, 
+                            name  = 簡稱, 
+                            date  = 年月日, 
+                            price = `收盤價(元)`,
+                            cap   = `市值(百萬元)`
+                           ) %>% 
+                     select(id, name, date, cap) %>% 
+                     mutate(id = as.character(id), 
+                            date = as.character(date) %>% as.Date('%Y%m%d')) %>% 
+                     filter(date == "2017-12-29"| date == "2018-12-28") %>% 
+                     mutate(year1 = year(date), cap1 = scales::dollar(cap)) %>% 
+                     select(date, year1, cap, cap1, id, name) %>% 
+                     group_by(year1) %>% 
+                     arrange(year1, desc(cap)) %>%
+                     slice(1:20) %>% 
+                     mutate(weight = cap/sum(cap)) %>% 
+                     ungroup()
+cap_day_2017_2018_year 
+glimpse(cap_day_2017_2018_year)
+```
+
+## 10. 將2017年前20大公司市值以圖形表示如下。注意：市值由大小排列順序。
+```{r, echo=FALSE, warning=FALSE}
+g_cap_weight_20_2017 <- cap_day_2017_2018_year %>% filter(year1 == 2017) %>% 
+                        select(id, weight) %>%
+                        mutate(id = id %>% as_factor() %>% fct_reorder(weight)) %>% 
+                        ggplot(aes(id, weight))+
+                        geom_col(fill  = "blue") +
+                        coord_flip()+
+                        labs(
+                         title = "Capitalization weight",
+                         subtitle = "20 largest firms in 2017"
+                        ) 
+g_cap_weight_20_2017
+```
+                           
+
+## 10.1 將圖形加上文字。
+```{r, echo=FALSE}
+g_cap_weight_20_2017_text <- g_cap_weight_20_2017 + 
+                             geom_text(aes(label = scales::percent(weight)), 
+                                       color  ="red", 
+                                       hjust  = -0.1,
+                                       size   = 3) +
+                             geom_label(label = "Taiwan Semiconductor",
+                                        fontface = "bold", 
+                                        hjust = 1.2,
+                                        color = "black", 
+                                        size = 2, 
+                                        fontface = "italic", 
+                                        data = cap_day_2017_2018_year %>% 
+                                               filter(year1 == 2017 & id == 2330))
+```
+
+## 11. 將題7的日報酬格式由寬格式改為長格式(如下),並只選取2018年的資料。提示：可用`tk_tbl()`將資料`xts`轉為`tibble`格式。並用`gather()`將寬資料轉為長資料。
+
+```{r, warning=FALSE, echo=FALSE}
+ret_day_2018_year_long <- ret_day_2_year %>% 
+                       tk_tbl(preserve_index = TRUE, rename_index = "date") %>% 
+                       gather(key = id, value = ret, -date) %>% 
+                       filter(date>="2017-12-31")
+ret_day_2018_year_long
+```
+
+## 12. 利用題9的20檔股票代碼，找出相對應20檔股票在2018年的日報酬率。提示：利用`filter()`。
+
+```{r, echo=FALSE, warning=FALSE}
+id_2018 <- cap_day_2017_2018_year %>% filter(year1 == 2018) %>% .$id 
+ret_day_20_2018_long <- ret_day_2018_year_long %>% filter(id %in% id_2018) 
+ret_day_20_2018_long                        
+```
+
+## 13. 依前題，計算20檔股票每月報酬率。提示：將每月中的每天報酬率加總，即可以得每月報酬率。利用`as.yearmon()`將日期轉為年月，並利用`group_by()`, `summarize()`計算分組報酬率總和。
+
+
+```{r, echo=FALSE, warning=FALSE}
+accum.ret_month_20_2018 <- ret_day_20_2018_long %>% select(id, date, ret) %>%
+                           #mutate(date = ceiling_date(date, "month") %>% ymd()-1) %>% 
+                           mutate(date = as.yearmon(date)) %>% 
+                           group_by(id, date) %>% 
+                           summarize(accum_ret = sum(ret)) %>% 
+                           ungroup()
+accum.ret_month_20_2018
+glimpse(accum.ret_month_20_2018)
+```
