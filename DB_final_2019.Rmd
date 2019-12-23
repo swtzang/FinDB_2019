@@ -26,7 +26,7 @@ library(timetk)
 # Questions:
 ## 1. 使用套件`tidyquant`, `timetk`，並讀入資料 `https://github.com/swtzang/FinDB_2019/tree/master/data_wrangle_practice/tej_day_price_2017_2018.txt` 
 ```{r, warning = FALSE, echo=FALSE}
-stock_day_2_year<-read_tsv("tej_day_price_2017_2018.txt")
+stock_day_2_year<-read_tsv("data_wrangle_practice/tej_day_price_2017_2018.txt")
 #
 glimpse(stock_day_2_year)
 ```
