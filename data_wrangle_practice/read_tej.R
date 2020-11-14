@@ -1,4 +1,8 @@
 #
+install.packages("pacman")
+library(pacman)
+p_load(readr, tidyverse)
+
 library(tidyquant)
 library(timetk)
 
@@ -27,6 +31,7 @@ price_day_2_year_na <- price_day_2_year %>%
                        gather() %>% 
                        filter(value!=0)
 price_day_2_year_na
+price_day_2_year$`1341`
 
 # fill na with the most recent price and check data
 price_day_2_year_na.1 <- price_day_2_year %>% 
